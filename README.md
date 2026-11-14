@@ -1,139 +1,103 @@
- 
-# **Hotel Demand Forecasting Project**
+# Hotel Revenue and Demand Forecasting
 
-This project analyzes hotel booking data to understand demand patterns, pricing behavior, cancellations, and revenue trends. It also uses Facebook Prophet to forecast future hotel demand and visualize seasonality components.
-
-The goal is to build a clear, reproducible workflow from raw data → cleaning → feature engineering → modeling → visualization → insights.
+Daily stayed-arrival forecasting pipeline for a City Hotel and a Resort Hotel using the Hotel Booking Demand dataset (119,390 bookings from July 2015 to August 2017). Seven forecasting methods and an equal-weighted ensemble are evaluated across four rolling-origin validation windows (~90 days each) to produce an operational 90-day forecast (1 September to 29 November 2017) with empirical 80% and 95% prediction intervals.
 
 ---
 
-## **📁 Project Structure**
+## Executive Deliverables
 
-```
-hotel-demand-forecasting/
-│
-├── data/
-│   └── hotel_bookings_demand.csv
-│
-├── notebooks/
-│   └── forecasting_model.ipynb
-│
-├── scripts/
-│   └── data_preprocessing.py
-│   └── visualization.py
-│
-├── Hotel_Demand_Forecasting_Workflow.pdf
-├── README.md
-```
+* **[Hotel Demand Forecasting Report (PDF)](Hotel_Demand_Forecasting_Report.pdf)** - Full 19-page report covering methodology, validation results, error diagnostics, and operational recommendations.
+* **[Hotel Demand and Forecasting Interactive Report (PDF)](Hotel%20Demand%20and%20Forecasting%20Interactive%20Report.pdf)** - Interactive narrative report and analytical walkthrough.
+* **[Hotel Demand and Forecasting Dashboard (PDF)](Hotel%20Demand%20and%20Forecasting%20Dashboard.pdf)** - Executive visual dashboard summarizing holdout accuracy and autumn 2017 projections.
+* **[Analytical Notebook](Hotel_Revenue_Demand_and_Forecasting.ipynb)** - Complete reproducible Python workflow, statistical checks, and visualizations.
 
 ---
 
-## **📌 Objectives**
+## Executive Summary
 
-- Clean and prepare hotel booking data  
-- Engineer key features (total nights, revenue, daily metrics)  
-- Visualize demand, ADR, cancellations, and revenue  
-- Build a Prophet forecasting model  
-- Interpret seasonality and trends  
-- Provide insights for hotel revenue management  
-
----
-
-## **🛠️ Tools & Libraries**
-
-- Python  
-- Pandas  
-- Matplotlib  
-- Prophet  
-- Jupyter Notebook  
+* **Daily Accuracy:** On the untouched 92-day summer holdout (1 June to 31 August 2017), the top-3 ensemble (ETS, Gradient Boosting, and Prophet) achieves **16.1% WAPE** and **16.9 arrivals/day MAE** across the portfolio (**20.6% WAPE** at City Hotel; **18.6% WAPE** at Resort Hotel).
+* **Outperforms Simple Baselines:** Reduces daily forecast error by **11.8%** compared to the best simple benchmark (4-week weekday average at 18.2% WAPE) and by **43%** compared to repeating the prior week (28.1% WAPE).
+* **Planning Horizon Aggregation:** Error drops to **8.8% WAPE** on weekly totals on the holdout and **~5% WAPE** on 28-day totals across all validation windows, providing a reliable baseline for staffing rosters and rate calendars.
+* **90-Day Forecast (1 Sep to 29 Nov 2017):** Projects **9,517 stayed arrivals** (**6,199** City Hotel; **3,318** Resort Hotel), down **2.5%** versus the same weekdays in 2016 (9,766), driven primarily by a softer October (-6.9% YoY).
+* **Bias and Risk Bounds:** The ensemble over-forecast the summer holdout by 4.3% (109.4 forecast vs. 104.8 actual arrivals/day). Empirical relative-residual intervals achieved **93% coverage** at the nominal 80% level and **99% coverage** at the nominal 95% level.
 
 ---
 
-## **📊 Visualizations Included**
+## 1. Historical Demand and Cancellation Dynamics
 
-This project includes the following visualizations:
+Realized demand is defined as non-cancelled bookings (`is_canceled = 0`) counted on arrival date (75,166 stayed vs. 44,224 cancelled bookings across 793 days). City Hotel averages 58.3 stayed arrivals/day with spring and autumn peaks, while Resort Hotel averages 36.5 stayed arrivals/day with steadier volume. Monthly cancellation rates range between **21% and 45%**, meaning gross bookings substantially overstate actual guest arrivals.
 
-### **1. Daily Hotel Demand**  
-Shows fluctuations and seasonal booking patterns.
+![Daily Stayed Arrivals by Hotel](images/Chart_01_Daily_Stayed_Arrivals_by_Hotel.png)
 
-### **2. Daily ADR (Average Daily Rate)**  
-Corrected visualization showing pricing trends over time.
-
-### **3. Daily Cancellations**  
-Daily count of canceled bookings.
-
-### **4. Daily Revenue**  
-Total revenue generated per day.
-
-### **5. Prophet Forecast**  
-90‑day demand forecast with uncertainty intervals.
-
-### **6. Prophet Components**  
-Weekly and yearly seasonality patterns.
-
-### **7. Combined Demand, ADR, and Cancellations Over Time**  
-A multi‑metric operational view.
+![Gross Booking Demand and Cancellations](images/Chart_04_Gross_Booking_Demand_and_Cancellations.png)
 
 ---
 
-## **📈 Forecasting Model**
+## 2. Seasonality Structure
 
-Prophet is used to model:
+Prophet additive seasonality components highlight distinct weekly and yearly patterns across the two properties. City Hotel experiences sharp Friday arrival surges (+11.0 arrivals/day) and Tuesday troughs (-8.4 arrivals/day), while Resort Hotel peaks on Mondays, Thursdays, and Saturdays.
 
-- Trend  
-- Weekly seasonality  
-- Yearly seasonality  
-
-The model predicts future demand and helps hotels plan staffing, pricing, and inventory.
+![Prophet Weekly and Yearly Seasonality](images/Chart_06_Prophet_Seasonality.png)
 
 ---
 
-## **📄 Documentation**
+## 3. Rolling-Origin Validation and Holdout Performance
 
-The full workflow is documented in:
+Models were refitted across four expanding-window folds (~90 days per test window). Ensemble members (ETS, Gradient Boosting, and Prophet) were selected solely on Folds 1 to 3, leaving Fold 4 (1 June to 31 August 2017) as a strict holdout.
 
-**Hotel_Demand_Forecasting_Workflow.pdf**
+![Rolling-Origin Validation Design](images/Chart_07_Rolling_Origin_Validation_Design.png)
 
-This includes:
+| Model | Holdout WAPE | Holdout MAE | Holdout Bias | 4-Fold Avg WAPE |
+| :--- | :---: | :---: | :---: | :---: |
+| **Ensemble (top 3)** | **16.1%** | **16.9** | **-4.5** | **19.9%** |
+| Prophet | 16.4% | 17.2 | +3.3 | 22.4% |
+| Gradient boosting | 16.7% | 17.5 | -5.4 | 20.0% |
+| ETS (Holt-Winters) | 17.8% | 18.7 | -11.5 | 21.1% |
+| Weekday mean (4 wks) | 18.2% | 19.1 | -10.0 | 22.5% |
+| Seasonal naive (364d) | 19.8% | 20.7 | +1.2 | 28.9% |
+| Seasonal naive (7d) | 28.1% | 29.4 | -10.1 | 27.9% |
+| SARIMAX + Fourier | 28.4% | 29.7 | -21.1 | 26.8% |
 
-- Data preparation  
-- Feature engineering  
-- Modeling  
-- Visualizations  
-- Insights & interpretation  
+![Holdout Actual vs Forecast Portfolio](images/Chart_10_Holdout_Actual_vs_Forecast_Portfolio.png)
 
----
+While daily counts contain unscheduled group-booking spikes, aggregating to weekly totals smooths daily noise and reduces holdout error to **8.8% WAPE**, making the forecast directly actionable for weekly housekeeping and front-desk scheduling.
 
-## **🔍 Dataset**
-
-Source: Kaggle — *Hotel Bookings Demand Dataset*  
-Contains:
-
-- arrival dates  
-- ADR  
-- cancellations  
-- nights stayed  
-- customer types  
-- booking channels  
-- revenue-related fields  
+![Weekly Totals on Holdout](images/Chart_12_Weekly_Totals_on_Holdout.png)
 
 ---
 
-## **🚀 How to Run the Project**
+## 4. 90-Day Forecast Outlook (1 Sep to 29 Nov 2017)
 
-1. Clone the repository  
-2. Install required libraries  
-3. Open the Jupyter notebook  
-4. Run all cells to reproduce the workflow  
+Refitting the ensemble on all historical data up to 31 August 2017 produces daily, weekly, and monthly arrival projections by property. Within the week, portfolio demand peaks on **Mondays (118 arrivals/day)** and **Fridays (113 arrivals/day)** and dips on **Tuesdays (94)** and **Sundays (98)**, with the single busiest forecast day falling on **Monday 09 October (132 arrivals; 80% interval 95 to 170)**.
+
+| Period | City Hotel | Resort Hotel | Portfolio | Same Weekdays 2016 | Change |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| September 2017 | 2,231 | 1,076 | 3,306 | 3,322 | -0.5% |
+| October 2017 | 2,228 | 1,224 | 3,452 | 3,709 | -6.9% |
+| November 2017 (1 to 29) | 1,740 | 1,019 | 2,759 | 2,735 | +0.9% |
+| **Total (90 days)** | **6,199** | **3,318** | **9,517** | **9,766** | **-2.5%** |
+
+![90-Day Forecast Portfolio](images/Chart_14_90Day_Forecast_Portfolio.png)
+
+![90-Day Forecast by Hotel](images/Chart_15_90Day_Forecast_by_Hotel.png)
+
+![Forecast Calendar Heatmap](images/Chart_17_Forecast_Calendar_Heatmap.png)
+
+Comparing the 90-day totals across individual models highlights forecast uncertainty: City Hotel projections span from 5,735 (ETS) to 6,798 (Prophet), while Resort Hotel spans from 3,167 to 3,416, with the ensemble positioned cleanly within that range.
+
+![Forecast Total by Model](images/Chart_18_Forecast_Total_by_Model.png)
 
 ---
 
-## **📬 Author**
+## Repository Structure
 
-**Hosea Ngo Sali**  
-Hotel Revenue Analyst & Data Analytics Enthusiast  
-Germany
-
----
-
- 
+```text
+├── hotel_bookings demand.csv                           # Source dataset (119,390 bookings, Jul 2015 to Aug 2017)
+├── hotel_demand_forecasting.py                         # Standalone batch pipeline (validation + 90-day forecast)
+├── Hotel_Revenue_Demand_and_Forecasting.ipynb          # Reproducible analytical notebook and diagnostics
+├── Hotel_Demand_Validation_Metrics.csv                 # Rolling-origin CV metrics across 4 folds and 8 models
+├── Hotel_Demand_Forecast_Sep_Nov_2017.csv              # 90-day daily forecasts with 80% and 95% intervals
+├── Hotel_Demand_Forecasting_Report.pdf                 # Full 19-page technical and operational report
+├── Hotel Demand and Forecasting Interactive Report.pdf # Interactive narrative report
+├── Hotel Demand and Forecasting Dashboard.pdf          # Executive summary dashboard
+└── images/                                             # High-resolution PNG charts embedded in README
